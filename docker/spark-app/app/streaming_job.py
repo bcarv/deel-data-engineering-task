@@ -23,6 +23,7 @@ Design notes
 """
 
 import os
+import time
 
 import psycopg2
 from pyspark.sql import SparkSession, DataFrame
@@ -121,6 +122,46 @@ streaming_pipelines_config = [
     },
 ]
 
+# Startup guard: wait for the Debezium topics to exist.
+def wait_for_kafka_topics(spark_session: SparkSession, timeout_seconds: int = 300) -> None:
+    """Wait until every configured Kafka topic exists.
+ 
+    When running `docker-compose up`, this code is starting to run before 
+    the Debezium connector has been registered and created the topics, so we 
+    need to poll for topic availability (prevent fail with UnknownTopicOrPartitionException)
+    """
+    expected_topics = [config["kafka_topic"] for config in streaming_pipelines_config]
+    deadline = time.monotonic() + timeout_seconds
+ 
+    for topic_name in expected_topics:
+        while True:
+            try:
+                # A batch read capped at one record: succeeds when the
+                # topic exists (even if empty) and raises when it does not
+                # Note: batch Kafka reads require endingOffsets=latest
+                (
+                    spark_session.read.format("kafka")
+                    .option("kafka.bootstrap.servers", kafka_bootstrap_servers)
+                    .option("subscribe", topic_name)
+                    .option("startingOffsets", "earliest")
+                    .option("endingOffsets", "latest")
+                    .load()
+                    .limit(1)
+                    .collect()
+                )
+                print(f"[startup] topic available: {topic_name}")
+                break
+            except Exception as probe_error:
+                if time.monotonic() > deadline:
+                    raise TimeoutError(
+                        f"Kafka topic '{topic_name}' not available after "
+                        f"{timeout_seconds}s — is the Debezium connector registered?"
+                    ) from probe_error
+                print(
+                      f"[startup] waiting for topic: {topic_name} "
+                      f"({type(probe_error).__name__})"
+                )
+                time.sleep(10)
 
 # Debezium envelope parsing -> typed DataFrame
 def build_parsed_stream(spark_session: SparkSession, pipeline_config: dict) -> DataFrame:
@@ -278,6 +319,9 @@ def main() -> None:
         .getOrCreate()
     )
     spark_session.sparkContext.setLogLevel("WARN")
+
+    # wait for the Debezium topics to exist
+    wait_for_kafka_topics(spark_session)
 
     for pipeline_config in streaming_pipelines_config:
         parsed_stream = build_parsed_stream(spark_session, pipeline_config)

@@ -170,12 +170,10 @@ def build_parsed_stream(spark_session: SparkSession, pipeline_config: dict) -> D
     primary_key_column = pipeline_config["primary_key_column"]
 
     debezium_envelope_schema = StructType([
-        StructField("payload", StructType([
             StructField("before", row_schema),
             StructField("after", row_schema),
             StructField("op", StringType()),        # c=create, u=update, d=delete, r=snapshot read
             StructField("ts_ms", LongType()),
-        ]))
     ])
 
     raw_kafka_stream = (
@@ -196,7 +194,7 @@ def build_parsed_stream(spark_session: SparkSession, pipeline_config: dict) -> D
                 debezium_envelope_schema,
             ).alias("message")
         )
-        .select("message.payload.*")
+        .select("message.*")
     )
 
     # Data columns come from `after` (create/update/snapshot). On deletes,

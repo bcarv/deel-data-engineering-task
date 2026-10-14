@@ -1,0 +1,12 @@
+# Provisioned dashboards
+
+apiVersion: 1
+
+providers:
+  - name: ACME Logistics
+    folder: Logistics
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

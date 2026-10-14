@@ -99,6 +99,22 @@ services:
       - "4040:4040"
     restart: unless-stopped
 
+  grafana:
+    image: grafana/grafana-oss:11.2.0
+    depends_on:
+      - transactions-db
+    environment:
+      # access anonymous reader as a viewer
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - "${PWD}/docker/grafana/provisioning:/etc/grafana/provisioning"
+      - "${PWD}/docker/grafana/dashboards:/var/lib/grafana/dashboards"
+    ports:
+      - "3000:3000"
+
 volumes:
   pg-data:
   spark-checkpoints:

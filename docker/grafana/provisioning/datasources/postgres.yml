@@ -1,0 +1,20 @@
+# Provisioned datasource
+
+apiVersion: 1
+
+datasources:
+  - name: ACME Analytics (Postgres)
+    uid: acme-postgres
+    type: postgres
+    access: proxy
+    url: transactions-db:5432
+    database: finance_db
+    user: finance_db_user
+    secureJsonData:
+      password: "1234"
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: false
+    isDefault: true
+    editable: false

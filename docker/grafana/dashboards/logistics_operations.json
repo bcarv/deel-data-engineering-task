@@ -1,0 +1,61 @@
+{
+    "uid": "acme-logistics",
+    "title": "ACME Logistics — Operational Metrics",
+    "schemaVersion": 39,
+    "refresh": "10s",
+    "time": { "from": "now-6h", "to": "now" },
+    "panels": [
+      {
+        "type": "table",
+        "title": "1) Open orders by delivery date and status",
+        "gridPos": { "h": 10, "w": 12, "x": 0, "y": 0 },
+        "datasource": { "type": "postgres", "uid": "acme-postgres" },
+        "targets": [
+          {
+            "refId": "A",
+            "format": "table",
+            "rawSql": "SELECT delivery_date, status, open_orders FROM analytics.vw_open_orders_by_delivery_date_status;"
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "title": "2) Top 3 delivery dates with more open orders",
+        "gridPos": { "h": 10, "w": 12, "x": 12, "y": 0 },
+        "datasource": { "type": "postgres", "uid": "acme-postgres" },
+        "targets": [
+          {
+            "refId": "A",
+            "format": "table",
+            "rawSql": "SELECT delivery_date, open_orders FROM analytics.vw_top3_delivery_dates_open_orders;"
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "title": "3) Open pending items by product",
+        "gridPos": { "h": 10, "w": 12, "x": 0, "y": 10 },
+        "datasource": { "type": "postgres", "uid": "acme-postgres" },
+        "targets": [
+          {
+            "refId": "A",
+            "format": "table",
+            "rawSql": "SELECT product_id, product_name, pending_items FROM analytics.vw_pending_items_by_product;"
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "title": "4) Top 3 customers with more pending orders",
+        "gridPos": { "h": 10, "w": 12, "x": 12, "y": 10 },
+        "datasource": { "type": "postgres", "uid": "acme-postgres" },
+        "targets": [
+          {
+            "refId": "A",
+            "format": "table",
+            "rawSql": "SELECT customer_id, customer_name, pending_orders FROM analytics.vw_top3_customers_pending_orders;"
+          }
+        ]
+      }
+    ]
+  }

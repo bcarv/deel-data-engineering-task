@@ -16,6 +16,11 @@ services:
         - "${PWD}/db/02-tables/fact_orders.sql:/docker-entrypoint-initdb.d/z04_fact_orders.sql"
         - "${PWD}/db/02-tables/fact_order_items.sql:/docker-entrypoint-initdb.d/z05_fact_order_items.sql"
         - "${PWD}/db/02-tables/orders_status_history.sql:/docker-entrypoint-initdb.d/z06_orders_status_history.sql"
+        #adding the views for metric extraction
+        - "${PWD}/db/03-views/vw_open_orders_by_delivery_date_status.sql:/docker-entrypoint-initdb.d/z07_vw_open_orders_by_delivery_date_status.sql"
+        - "${PWD}/db/03-views/vw_top3_delivery_dates_open_orders.sql:/docker-entrypoint-initdb.d/z08_vw_top3_delivery_dates_open_orders.sql"
+        - "${PWD}/db/03-views/vw_pending_items_by_product.sql:/docker-entrypoint-initdb.d/z09_vw_pending_items_by_product.sql"
+        - "${PWD}/db/03-views/vw_top3_customers_pending_orders.sql:/docker-entrypoint-initdb.d/z10_vw_top3_customers_pending_orders.sql"
     ports:
       - "5432:5432"
     command: ["postgres", "-c", "wal_level=logical", "-c", "hot_standby=on"]

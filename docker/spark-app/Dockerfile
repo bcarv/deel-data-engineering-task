@@ -37,4 +37,12 @@ RUN set -eux; \
     curl -fsSL -o "${jars}/commons-pool2-${COMMONS_POOL2_VERSION}.jar" \
       "https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/${COMMONS_POOL2_VERSION}/commons-pool2-${COMMONS_POOL2_VERSION}.jar"
 
-CMD ["tail", "-f", "/dev/null"]
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+ 
+# Application code
+COPY app/ /opt/spark-app/
+ 
+# local[2]: driver + executors in a single JVM with 2 cores — right-sized for the
+# demo stack. Production sizing strategy is documented in diagrams/architecture.
+CMD ["spark-submit", "--master", "local[2]", "/opt/spark-app/streaming_job.py"]

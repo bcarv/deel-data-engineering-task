@@ -9,6 +9,13 @@ services:
     volumes:
         - pg-data:/var/lib/postgresql/data
         - "${PWD}/db-scripts/initialize_db_ddl.sql:/docker-entrypoint-initdb.d/initialize_db_ddl.sql"
+        #adding the analytics schema and the tables
+        - "${PWD}/db/01-schema/analytics.sql:/docker-entrypoint-initdb.d/z01_analytics_schema.sql"
+        - "${PWD}/db/02-tables/dim_customers.sql:/docker-entrypoint-initdb.d/z02_dim_customers.sql"
+        - "${PWD}/db/02-tables/dim_products.sql:/docker-entrypoint-initdb.d/z03_dim_products.sql"
+        - "${PWD}/db/02-tables/fact_orders.sql:/docker-entrypoint-initdb.d/z04_fact_orders.sql"
+        - "${PWD}/db/02-tables/fact_order_items.sql:/docker-entrypoint-initdb.d/z05_fact_order_items.sql"
+        - "${PWD}/db/02-tables/orders_status_history.sql:/docker-entrypoint-initdb.d/z06_orders_status_history.sql"
     ports:
       - "5432:5432"
     command: ["postgres", "-c", "wal_level=logical", "-c", "hot_standby=on"]
@@ -70,16 +77,23 @@ services:
     depends_on:
       - kafka
       - transactions-db
+      - debezium-init
     environment:
       - SPARK_LOCAL_IP=spark-app
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - POSTGRES_URL=jdbc:postgresql://transactions-db:5432/finance_db
       - POSTGRES_HOST=transactions-db
       - POSTGRES_PORT=5432
       - POSTGRES_DB=finance_db
       - POSTGRES_USER=finance_db_user
       - POSTGRES_PASSWORD=1234
+      - CHECKPOINT_DIR=/checkpoints
+    volumes:
+      - spark-checkpoints:/checkpoints
     ports:
       - "4040:4040"
+    restart: unless-stopped
 
 volumes:
   pg-data:
+  spark-checkpoints:

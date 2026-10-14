@@ -92,6 +92,8 @@ streaming_pipelines_config = [
         "date_columns": ["order_date", "delivery_date"],
         "staging_table": "analytics.stg_orders",
         "target_table": "analytics.fact_orders",
+        # Append-only log of every order event, answering the historical-information requirement.
+        "history_table": "analytics.orders_status_history",
     },
     {
         "pipeline_name": "order_items",
@@ -219,6 +221,8 @@ def build_parsed_stream(spark_session: SparkSession, pipeline_config: dict) -> D
         selected_columns.append(column_expression.alias(field.name))
 
     selected_columns.append((spark_functions.col("op") == "d").alias("is_deleted"))
+    # Raw Debezium op (c/u/d/r) kept for the status-history append; it lands in staging but is never listed in the merge statement.
+    selected_columns.append(spark_functions.col("op").alias("op"))
     selected_columns.append(spark_functions.col("ts_ms").alias("event_ts_ms"))
 
     return (
@@ -262,10 +266,31 @@ def build_upsert_handler(pipeline_config: dict):
     """Return a foreachBatch handler bound to one pipeline's configuration."""
     primary_key_column = pipeline_config["primary_key_column"]
     merge_statement = build_merge_statement(pipeline_config)
+    history_table = pipeline_config.get("history_table")
 
     def upsert_micro_batch(micro_batch: DataFrame, batch_id: int) -> None:
         if micro_batch.isEmpty():
             return
+
+        # Append-only status history
+        if history_table is not None:
+            (
+                micro_batch.select(
+                    spark_functions.col("order_id"),
+                    spark_functions.col("status"),
+                    spark_functions.to_timestamp(
+                        spark_functions.col("event_ts_ms") / 1000.0
+                    ).alias("changed_at"),
+                    spark_functions.col("event_ts_ms").alias("source_ts_ms"),
+                    spark_functions.col("op"),
+                )
+                .write.jdbc(
+                    url=postgres_jdbc_url,
+                    table=history_table,
+                    mode="append",
+                    properties=postgres_jdbc_properties,
+                )
+            )
 
         # The same key can change several times within one micro-batch:
         # keep only the latest event (highest ts_ms) per primary key.

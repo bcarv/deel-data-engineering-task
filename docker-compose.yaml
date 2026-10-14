@@ -64,5 +64,22 @@ services:
     entrypoint: ["/bin/sh", "/init-connectors.sh"]
     restart: "no"
 
+  spark-app:
+    build:
+      context: ./docker/spark-app
+    depends_on:
+      - kafka
+      - transactions-db
+    environment:
+      - SPARK_LOCAL_IP=spark-app
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - POSTGRES_HOST=transactions-db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=finance_db
+      - POSTGRES_USER=finance_db_user
+      - POSTGRES_PASSWORD=1234
+    ports:
+      - "4040:4040"
+
 volumes:
   pg-data:

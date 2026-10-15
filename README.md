@@ -46,7 +46,7 @@ pg_cron ──> Postgres (operations schema)
                          Grafana (provisioned dashboard, 10s refresh)
 ```
  
-Cluster sizing strategy and the Spark metrics backing it: see [docs/cluster-sizing.md](docs/cluster-sizing.md). <!-- TODO: create -->
+Cluster sizing strategy and the Spark metrics backing it: see [docs/cluster-sizing.md](docs/cluster-sizing.md). 
  
 ## Dimensional model (schema `analytics`)
  
@@ -66,7 +66,7 @@ The four business questions are answered by dedicated views in `db/03-views/` (a
 2. `vw_top3_delivery_dates_open_orders`
 3. `vw_pending_items_by_product`
 4. `vw_top3_customers_pending_orders`
-**Definition of "open" order:** `status NOT IN ('COMPLETED', 'CANCELLED')` and not logically deleted. <!-- TODO: confirm against SELECT DISTINCT status and adjust if needed -->
+**Definition of "open" order:** `status NOT IN ('COMPLETED', 'CANCELLED')` and not logically deleted. 
  
 ## How it works — the Spark application
  

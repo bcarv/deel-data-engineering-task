@@ -26,7 +26,7 @@ On a cold start the dashboard panels populate within ~2–3 minutes: Postgres in
  
 ## Architecture
  
-![Architecture](diagrams/architecture.md)
+For an Architecture Diagram please see [diagrams/architecture.md](./diagrams/architecture.md)
  
 ```
 pg_cron ──> Postgres (operations schema)
